@@ -28,24 +28,31 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 加载参数，获得两个函数
 	mapf, reducef := loadPlugin(os.Args[1])
 
 	//
 	// read each input file,
 	// pass it to Map,
 	// accumulate the intermediate Map output.
-	//
+
+	// 创建计数器
 	intermediate := []mr.KeyValue{}
+	// 循环读取参数中的文档
 	for _, filename := range os.Args[2:] {
+		// 打开文件
 		file, err := os.Open(filename)
 		if err != nil {
 			log.Fatalf("cannot open %v", filename)
 		}
+		// 读文件
 		content, err := ioutil.ReadAll(file)
 		if err != nil {
 			log.Fatalf("cannot read %v", filename)
 		}
+		// 关闭文件
 		file.Close()
+		// 调用map函数，文档内容拆分为kv对的数组
 		kva := mapf(filename, string(content))
 		intermediate = append(intermediate, kva...)
 	}
@@ -55,9 +62,10 @@ func main() {
 	// intermediate data is in one place, intermediate[],
 	// rather than being partitioned into NxM buckets.
 	//
-
+	// 按key排序
 	sort.Sort(ByKey(intermediate))
 
+	// 输出文件
 	oname := "mr-out-0"
 	ofile, _ := os.Create(oname)
 
@@ -68,18 +76,22 @@ func main() {
 	i := 0
 	for i < len(intermediate) {
 		j := i + 1
+		// 指针j移动到这一段相同的key的尾部
 		for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
 			j++
 		}
 		values := []string{}
+		// 把相同key的一串value都放到values里面
 		for k := i; k < j; k++ {
 			values = append(values, intermediate[k].Value)
 		}
+		// 对key和values调用reduce
 		output := reducef(intermediate[i].Key, values)
 
 		// this is the correct format for each line of Reduce output.
 		fmt.Fprintf(ofile, "%v %v\n", intermediate[i].Key, output)
 
+		// 移动指针j
 		i = j
 	}
 

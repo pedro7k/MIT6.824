@@ -19,10 +19,10 @@ import "strconv"
 // of key/value pairs.
 //
 func Map(filename string, contents string) []mr.KeyValue {
-	// function to detect word separators.
+	// 函数，探测word的分隔符
 	ff := func(r rune) bool { return !unicode.IsLetter(r) }
 
-	// split contents into an array of words.
+	// 拆分字符串
 	words := strings.FieldsFunc(contents, ff)
 
 	kva := []mr.KeyValue{}
@@ -39,6 +39,6 @@ func Map(filename string, contents string) []mr.KeyValue {
 // any map task.
 //
 func Reduce(key string, values []string) string {
-	// return the number of occurrences of this word.
+	// 返回word出现次数
 	return strconv.Itoa(len(values))
 }
